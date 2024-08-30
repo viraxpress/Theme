@@ -90,7 +90,7 @@ class CheckParentThemeCode implements ObserverInterface
         $globalThemeCode = $globalTheme->getCode();
 
         if ($globalThemeCode === self::THEME_CODE) {
-            $sourceDir = BP . '/app/code/ViraXpress/Frontend/vx/vx_frontend/web';
+            $sourceDir = BP . '/vendor/viraxpress/frontend/vx/vx_frontend/web';
             $destinationDir = BP . "/pub/vx/{$globalThemeCode}/web";
             $this->copyAndModifyFiles($sourceDir, $destinationDir, $globalThemeCode);
         } else {
@@ -100,7 +100,7 @@ class CheckParentThemeCode implements ObserverInterface
             $parentThemeId = $theme->getParentId();
             $themeCode = $theme->getCode();
 
-            $sourceDir = BP . '/app/code/ViraXpress/Frontend/vx/vx_frontend/web';
+            $sourceDir = BP . '/vendor/viraxpress/frontend/vx/vx_frontend/web';
             $destinationDir = BP . "/pub/vx/{$themeCode}/web";
             $scriptFile = $destinationDir . '/tailwind/run_script.sh';
             if ($parentThemeId) {

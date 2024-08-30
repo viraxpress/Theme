@@ -105,7 +105,7 @@ class CreateTailwindFolder implements DataPatchInterface
      */
     protected function copyWysiwygFiles()
     {
-        $sourceDir = BP . '/app/code/ViraXpress/Frontend/wysiwyg';
+        $sourceDir = BP . '/vendor/viraxpress/frontend/wysiwyg';
         $destinationDir = BP . '/pub/media/wysiwyg';
 
         $this->copyFilesRecursively($sourceDir, $destinationDir);
