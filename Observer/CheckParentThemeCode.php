@@ -149,7 +149,7 @@ class CheckParentThemeCode implements ObserverInterface
                         if ($entry === 'run_script.sh' && strpos($sourcePath, 'tailwind') !== false) {
                             // Modify the file content
                             $content = $this->file->read($sourcePath);
-                            $oldPath = BP . '/pub/media/vx/vx_frontend/web/tailwind';
+                            $oldPath = '/var/www/html/pub/media/vx/vx_frontend/web/tailwind';
                             $newPath = BP . '/pub/vx/' . $themeCode . '/web/tailwind';
                             $modifiedContent = str_replace($oldPath, $newPath, $content);
 
