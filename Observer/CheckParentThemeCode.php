@@ -29,6 +29,9 @@ use Magento\Theme\Model\ThemeFactory;
 use Magento\Framework\Filesystem\Io\File;
 use Magento\Framework\View\Design\Theme\ThemeProviderInterface;
 use Magento\Framework\View\DesignInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Store\Model\ScopeInterface;
 
 class CheckParentThemeCode implements ObserverInterface
 {
@@ -59,22 +62,38 @@ class CheckParentThemeCode implements ObserverInterface
     protected $design;
 
     /**
+     * @var StoreManagerInterface
+     */
+    protected $storeManager;
+
+    /**
+     * @var ScopeConfigInterface
+     */
+    protected $scopeConfig;
+
+    /**
      * @param ThemeFactory $themeFactory
      * @param DesignInterface $design
      * @param ThemeProviderInterface $themeProvider
      * @param File $file
      * @param DesignInterface $design
+     * @param StoreManagerInterface $storeManager
+     * @param ScopeConfigInterface $scopeConfig
      */
     public function __construct(
         ThemeFactory $themeFactory,
         ThemeProviderInterface $themeProvider,
         File $file,
-        DesignInterface $design
+        DesignInterface $design,
+        StoreManagerInterface $storeManager,
+        ScopeConfigInterface $scopeConfig
     ) {
         $this->themeFactory = $themeFactory;
         $this->file = $file;
         $this->themeProvider = $themeProvider;
         $this->design = $design;
+        $this->storeManager = $storeManager;
+        $this->scopeConfig = $scopeConfig;
     }
 
     /**
@@ -88,13 +107,42 @@ class CheckParentThemeCode implements ObserverInterface
         $globalThemeId = $this->design->getConfigurationDesignTheme('frontend', ['website' => null]);
         $globalTheme = $this->themeProvider->getThemeById($globalThemeId);
         $globalThemeCode = $globalTheme->getCode();
+        $storeId = $observer->getEvent()->getStore();
 
+        $websites = $this->storeManager->getWebsites();
+        foreach ($websites as $website) {
+            $websiteId = $website->getId();
+            $websiteCode = $website->getCode();
+            $websiteName = $website->getName();
+            $websiteThemeId = $this->scopeConfig->getValue(
+                    'design/theme/theme_id',
+                    ScopeInterface::SCOPE_WEBSITE,
+                    $websiteId
+                );
+            $websiteTheme = $this->themeProvider->getThemeById($websiteThemeId);
+            if ($websiteTheme['code'] == self::THEME_CODE) {
+                $sourceDir = BP . '/vendor/viraxpress/frontend/vx/vx_frontend/web';
+                $destinationDir = BP . "/pub/vx/{$websiteTheme['code']}/web";
+                $this->copyAndModifyFiles($sourceDir, $destinationDir, $websiteTheme['code']);
+            } else {
+                $websiteParentTheme = $this->themeProvider->getThemeById($websiteTheme['theme_id']);
+                $websiteParentThemeId = $websiteParentTheme->getParentId();
+                $sourceDir = BP . '/vendor/viraxpress/frontend/vx/vx_frontend/web';
+                $destinationDir = BP . "/pub/vx/{$websiteTheme['code']}/web";
+                if ($websiteParentThemeId) {
+                    $websiteParentTheme = $this->themeFactory->create()->load($websiteParentThemeId);
+                    if ($websiteParentTheme->getThemePath() === self::THEME_CODE) {
+                        $this->copyAndModifyFiles($sourceDir, $destinationDir, $websiteTheme['code']);
+                    }
+                }
+            }
+        }
         if ($globalThemeCode === self::THEME_CODE) {
             $sourceDir = BP . '/vendor/viraxpress/frontend/vx/vx_frontend/web';
             $destinationDir = BP . "/pub/vx/{$globalThemeCode}/web";
             $this->copyAndModifyFiles($sourceDir, $destinationDir, $globalThemeCode);
-        } else {
-            $storeId = $observer->getEvent()->getStore();
+        }
+        if ($storeId) {
             $themeId = $this->design->getConfigurationDesignTheme('frontend', ['store' => $storeId]);
             $theme = $this->themeProvider->getThemeById($themeId);
             $parentThemeId = $theme->getParentId();
