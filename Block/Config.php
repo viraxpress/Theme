@@ -142,4 +142,3 @@ class Config extends \Magento\Framework\View\Element\Template
         return $images;
     }
 }
-

@@ -73,7 +73,6 @@ class CheckParentThemeCode implements ObserverInterface
 
     /**
      * @param ThemeFactory $themeFactory
-     * @param DesignInterface $design
      * @param ThemeProviderInterface $themeProvider
      * @param File $file
      * @param DesignInterface $design
@@ -115,10 +114,10 @@ class CheckParentThemeCode implements ObserverInterface
             $websiteCode = $website->getCode();
             $websiteName = $website->getName();
             $websiteThemeId = $this->scopeConfig->getValue(
-                    'design/theme/theme_id',
-                    ScopeInterface::SCOPE_WEBSITE,
-                    $websiteId
-                );
+                'design/theme/theme_id',
+                ScopeInterface::SCOPE_WEBSITE,
+                $websiteId
+            );
             $websiteTheme = $this->themeProvider->getThemeById($websiteThemeId);
             if ($websiteTheme['code'] == self::THEME_CODE) {
                 $sourceDir = BP . '/vendor/viraxpress/frontend/vx/vx_frontend/web';

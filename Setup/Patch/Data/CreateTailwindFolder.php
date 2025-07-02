@@ -64,7 +64,6 @@ class CreateTailwindFolder implements DataPatchInterface
     protected $directoryList;
 
     /**
-     * @param ModuleDataSetupInterface $moduleDataSetup
      * @param File $file
      * @param LoggerInterface $logger
      * @param ScopeConfigInterface $scopeConfig
