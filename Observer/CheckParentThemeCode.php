@@ -151,13 +151,21 @@ class CheckParentThemeCode implements ObserverInterface
             $sourceDir = BP . '/vendor/viraxpress/frontend/vx/vx_frontend/web';
             $destinationDir = BP . "/pub/vx/{$themeCode}/web";
             $scriptFile = $destinationDir . '/tailwind/run_script.sh';
-            if ($parentThemeId) {
+            $currentTheme = $theme;
+            while ($currentTheme && $currentTheme->getParentId()) {
+                $parentThemeId = $currentTheme->getParentId();
                 $parentTheme = $this->themeFactory->create()->load($parentThemeId);
-                if ($parentTheme->getThemePath() === self::THEME_CODE) {
-                    $this->copyAndModifyFiles($sourceDir, $destinationDir, $themeCode);
-                }
-            }
 
+                if ($parentTheme->getThemePath() === self::THEME_CODE) {
+                    $directParent = $this->themeFactory->create()->load($theme->getParentId());
+                    $sourceDir = BP . '/pub/vx/'. $directParent->getThemePath() .'/web';
+                    $this->copyAndModifyFiles($sourceDir, $destinationDir, $themeCode);
+                    break; // stop when found
+                }
+
+                // Move up the chain
+                $currentTheme = $parentTheme;
+            }
             if (self::THEME_CODE == $themeCode) {
                 $this->copyAndModifyFiles($sourceDir, $destinationDir, $themeCode);
             }
@@ -175,7 +183,6 @@ class CheckParentThemeCode implements ObserverInterface
     {
         $source = rtrim($source, '/') . '/';
         $destination = rtrim($destination, '/') . '/';
-
         $dir = opendir($source);
         if ($dir === false) {
             throw new \Exception("Unable to open source directory: " . $source);
@@ -185,10 +192,9 @@ class CheckParentThemeCode implements ObserverInterface
             if ($entry != '.' && $entry != '..') {
                 $sourcePath = $source . $entry;
                 $destinationPath = $destination . $entry;
-
                 if (is_dir($sourcePath)) {
-                    if (!$this->file->fileExists($destinationPath)) {
-                        $this->file->mkdir($destinationPath, 0775, true);
+                    if (!file_exists($destinationPath)) {
+                        $result = $this->file->mkdir($destinationPath, 0775, true);
                     }
                     $this->copyAndModifyFiles($sourcePath, $destinationPath, $themeCode);
                 } else {
@@ -197,10 +203,9 @@ class CheckParentThemeCode implements ObserverInterface
                         if ($entry === 'run_script.sh' && strpos($sourcePath, 'tailwind') !== false) {
                             // Modify the file content
                             $content = $this->file->read($sourcePath);
-                            $oldPath = '/var/www/html/pub/media/vx/vx_frontend/web/tailwind';
+                            $oldPath = BP .'/pub/media/vx/' . self::THEME_CODE . '/web/tailwind';
                             $newPath = BP . '/pub/vx/' . $themeCode . '/web/tailwind';
                             $modifiedContent = str_replace($oldPath, $newPath, $content);
-
                             // Write the modified content to the destination path
                             $this->file->write($destinationPath, $modifiedContent);
                         } else {
